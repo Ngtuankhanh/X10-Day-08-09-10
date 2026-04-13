@@ -1,0 +1,110 @@
+[
+  {
+    "id": "gq01",
+    "question": "SLA xử lý ticket P1 đã thay đổi như thế nào so với phiên bản trước?",
+    "answer": "SLA xử lý ticket P1 đã giảm từ 6 giờ xuống 4 giờ. [1][2]",
+    "sources": [
+      "support/sla-p1-2026.pdf"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:10"
+  },
+  {
+    "id": "gq02",
+    "question": "Khi làm việc remote, tôi phải dùng VPN và được kết nối trên tối đa bao nhiêu thiết bị?",
+    "answer": "Bạn được kết nối VPN trên tối đa 2 thiết bị cùng lúc. [1]",
+    "sources": [
+      "support/helpdesk-faq.md"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:15"
+  },
+  {
+    "id": "gq03",
+    "question": "Đơn hàng mua trong chương trình Flash Sale và đã kích hoạt sản phẩm có được hoàn tiền không?",
+    "answer": "Đơn hàng đã áp dụng mã giảm giá đặc biệt theo chương trình khuyến mãi Flash Sale sẽ không được hoàn tiền. [1]",
+    "sources": [
+      "policy/refund-v4.pdf"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:19"
+  },
+  {
+    "id": "gq04",
+    "question": "Nếu chọn nhận store credit thay vì hoàn tiền, tôi được bao nhiêu phần trăm so với số tiền gốc?",
+    "answer": "Nếu chọn nhận store credit, bạn sẽ nhận được 110% so với số tiền gốc. [1]",
+    "sources": [
+      "policy/refund-v4.pdf"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:21"
+  },
+  {
+    "id": "gq05",
+    "question": "Contractor từ bên ngoài công ty có thể được cấp quyền Admin Access không? Nếu có, cần bao nhiêu ngày và có yêu cầu đặc biệt gì?",
+    "answer": "Contractor từ bên ngoài công ty có thể được cấp quyền Admin Access, nhưng cần phải có sự phê duyệt từ IT Manager và CISO, cùng với yêu cầu đào tạo về chính sách bảo mật. Tài liệu đã truy xuất không đề cập đến quy định đặc biệt cho contractors receiving Admin Access Quy trình chuẩn áp dụng: Quy trình cấp quyền Admin Access yêu cầu phê duyệt từ IT Manager và CISO, cùng với thời gian xử lý là 5 ngày làm việc. Phải hoàn thành đào tạo về chính sách bảo mật [2]",
+    "sources": [
+      "it/access-control-sop.md"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:26"
+  },
+  {
+    "id": "gq06",
+    "question": "Lúc 2 giờ sáng xảy ra sự cố P1, on-call engineer cần cấp quyền tạm thời cho một engineer xử lý incident. Quy trình cụ thể như thế nào và quyền này tồn tại bao lâu?",
+    "answer": "Quy trình cấp quyền tạm thời cho engineer trong sự cố P1 bao gồm việc on-call IT Admin cấp quyền sau khi được Tech Lead phê duyệt, và quyền này tồn tại tối đa 24 giờ. Sau 24 giờ, phải có ticket chính thức hoặc quyền bị thu hồi tự động Tech Lead phải phê duyệt bằng lời [1]",
+    "sources": [
+      "it/access-control-sop.md"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:33"
+  },
+  {
+    "id": "gq07",
+    "question": "Công ty sẽ phạt bao nhiêu nếu team IT vi phạm cam kết SLA P1?",
+    "answer": "I do not have enough information in the retrieved documents to answer confidently.",
+    "sources": [],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:36"
+  },
+  {
+    "id": "gq08",
+    "question": "Nhân viên phải báo trước bao nhiêu ngày để xin nghỉ phép năm? Con số này có giống với số ngày cần giấy tờ khi nghỉ ốm không?",
+    "answer": "Nhân viên phải báo trước ít nhất 3 ngày làm việc để xin nghỉ phép năm. Line Manager phê duyệt trong vòng 1 ngày làm việc. Trong trường hợp khẩn cấp, có thể gửi yêu cầu muộn hơn nhưng phải được Line Manager đồng ý. [2][1]",
+    "sources": [
+      "hr/leave-policy-2026.pdf"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:41"
+  },
+  {
+    "id": "gq09",
+    "question": "Mật khẩu tài khoản công ty cần đổi định kỳ không? Nếu có, hệ thống sẽ nhắc nhở trước bao nhiêu ngày và đổi qua đâu?",
+    "answer": "Có, mật khẩu phải được thay đổi mỗi 90 ngày và hệ thống sẽ nhắc nhở 7 ngày trước khi hết hạn. [1]",
+    "sources": [
+      "support/helpdesk-faq.md"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:45"
+  },
+  {
+    "id": "gq10",
+    "question": "Chính sách hoàn tiền hiện tại áp dụng cho đơn hàng đặt trước ngày 01/02/2026 không?",
+    "answer": "Chính sách hoàn tiền hiện tại không áp dụng cho đơn hàng đặt trước ngày 01/02/2026. [1][2]",
+    "sources": [
+      "policy/refund-v4.pdf"
+    ],
+    "chunks_retrieved": 3,
+    "retrieval_mode": "dense",
+    "timestamp": "2026-04-13T17:52:50"
+  }
+]

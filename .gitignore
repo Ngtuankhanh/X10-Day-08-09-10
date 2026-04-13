@@ -1,6 +1,15 @@
+# OS
 .DS_Store
-*.swp
-*~
 
-# Grading questions — không public trước 17:00
-day08/lab/data/grading_questions.json
+# Python & Môi trường ảo
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+
+# Database local (Tạo ra từ index.py, không nộp)
+chroma_db/
+
+# Sensitive information
+.env
