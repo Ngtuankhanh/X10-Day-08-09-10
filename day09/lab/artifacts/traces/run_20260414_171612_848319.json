@@ -1,0 +1,229 @@
+{
+  "task": "Contractor cần Level 2 access tạm thời để xử lý sự cố P1 đang active. Quy trình là gì?",
+  "route_reason": "policy/access keywords=['access', 'level 2'] -> policy_tool_worker | mcp_enabled=True | risk_high=False",
+  "risk_high": false,
+  "needs_tool": true,
+  "hitl_triggered": false,
+  "retrieved_chunks": [
+    {
+      "text": "Escalation chỉ áp dụng khi cần thay đổi quyền hệ thống ngoài quy trình thông thường.\nVí dụ: Khẩn cấp trong sự cố P1, cần cấp quyền tạm thời để fix incident.\n\nQuy trình escalation khẩn cấp:\n1. On-call IT Admin có thể cấp quyền tạm thời (max 24 giờ) sau khi được Tech Lead phê duyệt bằng lời.\n2. Sau 24 giờ, phải có ticket chính thức hoặc quyền bị thu hồi tự động.\n3. Mọi quyền tạm thời phải được ghi log vào hệ thống Security Audit.",
+      "source": "access_control_sop.txt",
+      "score": 0.9214,
+      "metadata": {
+        "source": "access_control_sop.txt",
+        "doc_path": "/Users/nguyenhangan/Project/X10-Day-08-09-10/day09/lab/data/docs/access_control_sop.txt",
+        "department": "IT Security",
+        "effective_date": "2026-01-01",
+        "access": "internal",
+        "header_source": "it/access-control-sop.md",
+        "section": "Section 4: Escalation khi cần thay đổi quyền hệ thống",
+        "chunk_id": "access_control_sop_004"
+      }
+    },
+    {
+      "text": "P1 — CRITICAL (Khẩn cấp):\nĐịnh nghĩa: Sự cố ảnh hưởng toàn bộ hệ thống production, không có workaround.\nVí dụ: Database sập, API gateway down, toàn bộ người dùng không thể đăng nhập.\n\nP2 — HIGH (Nghiêm trọng):\nĐịnh nghĩa: Sự cố ảnh hưởng một phần hệ thống, có workaround tạm thời.\nVí dụ: Một số tính năng không hoạt động, ảnh hưởng một nhóm người dùng.\n\nP3 — MEDIUM (Trung bình):\nĐịnh nghĩa: Lỗi ảnh hưởng không đáng kể, người dùng vẫn làm việc được.\n\nP4 — LOW (Thấp):\nĐịnh nghĩa: Yêu cầu cải tiến, gợi ý, hoặc lỗi giao diện nhỏ.",
+      "source": "sla_p1_2026.txt",
+      "score": 0.7071,
+      "metadata": {
+        "source": "sla_p1_2026.txt",
+        "doc_path": "/Users/nguyenhangan/Project/X10-Day-08-09-10/day09/lab/data/docs/sla_p1_2026.txt",
+        "department": "IT",
+        "effective_date": "2026-01-15",
+        "access": "internal",
+        "header_source": "support/sla-p1-2026.pdf",
+        "section": "Phần 1: Định nghĩa mức độ ưu tiên",
+        "chunk_id": "sla_p1_2026_000"
+      }
+    },
+    {
+      "text": "Level 1 — Read Only:\nÁp dụng cho: Tất cả nhân viên mới trong 30 ngày đầu.\nPhê duyệt: Line Manager.\nThời gian xử lý: 1 ngày làm việc.\n\nLevel 2 — Standard Access:\nÁp dụng cho: Nhân viên chính thức đã qua thử việc.\nPhê duyệt: Line Manager + IT Admin.\nThời gian xử lý: 2 ngày làm việc.\n\nLevel 3 — Elevated Access:\nÁp dụng cho: Team Lead, Senior Engineer, Manager.\nPhê duyệt: Line Manager + IT Admin + IT Security.\nThời gian xử lý: 3 ngày làm việc.\n\nLevel 4 — Admin Access:\nÁp dụng cho: DevOps, SRE, IT Admin.\nPhê duyệt: IT Manager + CISO.\nThời gian xử lý: 5 ngày làm việc.\nYêu cầu thêm: Training bắt buộc về security policy.",
+      "source": "access_control_sop.txt",
+      "score": 0.6357,
+      "metadata": {
+        "source": "access_control_sop.txt",
+        "doc_path": "/Users/nguyenhangan/Project/X10-Day-08-09-10/day09/lab/data/docs/access_control_sop.txt",
+        "department": "IT Security",
+        "effective_date": "2026-01-01",
+        "access": "internal",
+        "header_source": "it/access-control-sop.md",
+        "section": "Section 2: Phân cấp quyền truy cập",
+        "chunk_id": "access_control_sop_002"
+      }
+    }
+  ],
+  "retrieved_sources": [
+    "access_control_sop.txt",
+    "sla_p1_2026.txt"
+  ],
+  "policy_result": {
+    "policy_applies": true,
+    "policy_name": "access_control_sop",
+    "exceptions_found": [],
+    "source": [
+      "access_control_sop.txt",
+      "sla_p1_2026.txt"
+    ],
+    "policy_version_note": "",
+    "requires_human_confirmation": false,
+    "answer_hints": [
+      "SOP ghi nhận quyền yêu cầu là Level 2 — Standard Access.",
+      "Trong tình huống khẩn cấp, On-call IT Admin có thể cấp quyền tạm thời sau khi được Tech Lead phê duyệt bằng lời.",
+      "Quyền tạm thời tối đa 24 giờ; sau đó phải có ticket chính thức hoặc bị thu hồi.",
+      "Ví dụ: Khẩn cấp trong sự cố P1, cần cấp quyền tạm thời để fix incident.",
+      "1. On-call IT Admin có thể cấp quyền tạm thời (max 24 giờ) sau khi được Tech Lead phê duyệt bằng lời.",
+      "2. Sau 24 giờ, phải có ticket chính thức hoặc quyền bị thu hồi tự động.",
+      "3. Mọi quyền tạm thời phải được ghi log vào hệ thống Security Audit.",
+      "On-call IT Admin có thể cấp quyền tạm thời (max 24 giờ) sau khi được Tech Lead phê duyệt bằng lời.",
+      "Phê duyệt: Line Manager."
+    ],
+    "explanation": "Access-control policy được tổng hợp từ SOP và MCP access tool.",
+    "access_decision": {
+      "access_level": 2,
+      "access_level_name": "Level 2 — Standard Access",
+      "requester_role": "contractor",
+      "can_grant": true,
+      "required_approvers": [
+        "Tech Lead",
+        "On-call IT Admin"
+      ],
+      "approver_count": 2,
+      "standard_required_approvers": [
+        "Line Manager",
+        "IT Admin"
+      ],
+      "standard_processing_time": "2 ngày làm việc",
+      "emergency_override": true,
+      "temporary_access_duration_hours": 24,
+      "notes": [
+        "Escalation path áp dụng cho thay đổi quyền ngoài quy trình thông thường khi xử lý sự cố khẩn cấp.",
+        "On-call IT Admin có thể cấp quyền tạm thời sau khi được Tech Lead phê duyệt bằng lời.",
+        "Quyền tạm thời tối đa 24 giờ; sau đó phải có ticket chính thức hoặc bị thu hồi tự động.",
+        "Mọi quyền tạm thời phải được ghi log vào hệ thống Security Audit.",
+        "SOP mô tả level này thường áp dụng cho: nhân viên chính thức đã qua thử việc."
+      ],
+      "source": "access_control_sop.txt"
+    },
+    "notes": [
+      "Escalation path áp dụng cho thay đổi quyền ngoài quy trình thông thường khi xử lý sự cố khẩn cấp.",
+      "On-call IT Admin có thể cấp quyền tạm thời sau khi được Tech Lead phê duyệt bằng lời.",
+      "Quyền tạm thời tối đa 24 giờ; sau đó phải có ticket chính thức hoặc bị thu hồi tự động.",
+      "Mọi quyền tạm thời phải được ghi log vào hệ thống Security Audit.",
+      "SOP mô tả level này thường áp dụng cho: nhân viên chính thức đã qua thử việc."
+    ],
+    "domain": "access"
+  },
+  "mcp_tools_used": [
+    {
+      "tool": "check_access_permission",
+      "input": {
+        "access_level": 2,
+        "requester_role": "contractor",
+        "is_emergency": true
+      },
+      "output": {
+        "access_level": 2,
+        "access_level_name": "Level 2 — Standard Access",
+        "requester_role": "contractor",
+        "can_grant": true,
+        "required_approvers": [
+          "Tech Lead",
+          "On-call IT Admin"
+        ],
+        "approver_count": 2,
+        "standard_required_approvers": [
+          "Line Manager",
+          "IT Admin"
+        ],
+        "standard_processing_time": "2 ngày làm việc",
+        "emergency_override": true,
+        "temporary_access_duration_hours": 24,
+        "notes": [
+          "Escalation path áp dụng cho thay đổi quyền ngoài quy trình thông thường khi xử lý sự cố khẩn cấp.",
+          "On-call IT Admin có thể cấp quyền tạm thời sau khi được Tech Lead phê duyệt bằng lời.",
+          "Quyền tạm thời tối đa 24 giờ; sau đó phải có ticket chính thức hoặc bị thu hồi tự động.",
+          "Mọi quyền tạm thời phải được ghi log vào hệ thống Security Audit.",
+          "SOP mô tả level này thường áp dụng cho: nhân viên chính thức đã qua thử việc."
+        ],
+        "source": "access_control_sop.txt"
+      },
+      "error": null,
+      "timestamp": "2026-04-14T17:16:12.853324"
+    }
+  ],
+  "worker_io_logs": [
+    {
+      "worker": "retrieval_worker",
+      "input": {
+        "task": "Contractor cần Level 2 access tạm thời để xử lý sự cố P1 đang active. Quy trình là gì?",
+        "top_k": 3
+      },
+      "output": {
+        "chunks_count": 3,
+        "sources": [
+          "access_control_sop.txt",
+          "sla_p1_2026.txt"
+        ]
+      },
+      "error": null
+    },
+    {
+      "worker": "policy_tool_worker",
+      "input": {
+        "task": "Contractor cần Level 2 access tạm thời để xử lý sự cố P1 đang active. Quy trình là gì?",
+        "chunks_count": 3,
+        "needs_tool": true
+      },
+      "output": {
+        "domain": "access",
+        "policy_applies": true,
+        "exceptions_count": 0,
+        "mcp_calls": 1
+      },
+      "error": null
+    },
+    {
+      "worker": "synthesis_worker",
+      "input": {
+        "task": "Contractor cần Level 2 access tạm thời để xử lý sự cố P1 đang active. Quy trình là gì?",
+        "chunks_count": 3,
+        "has_policy": true
+      },
+      "output": {
+        "answer_length": 647,
+        "sources": [
+          "access_control_sop.txt",
+          "sla_p1_2026.txt"
+        ],
+        "confidence": 0.83
+      },
+      "error": null
+    }
+  ],
+  "final_answer": "SOP ghi nhận quyền yêu cầu là Level 2 — Standard Access. [access_control_sop.txt] Trong tình huống khẩn cấp, On-call IT Admin có thể cấp quyền tạm thời sau khi được Tech Lead phê duyệt bằng lời. [access_control_sop.txt] Quyền tạm thời tối đa 24 giờ; sau đó phải có ticket chính thức hoặc bị thu hồi. [access_control_sop.txt] Escalation path áp dụng cho thay đổi quyền ngoài quy trình thông thường khi xử lý sự cố khẩn cấp. [access_control_sop.txt] On-call IT Admin có thể cấp quyền tạm thời sau khi được Tech Lead phê duyệt bằng lời. [access_control_sop.txt] Định nghĩa: Sự cố ảnh hưởng một phần hệ thống, có workaround tạm thời. [sla_p1_2026.txt]",
+  "sources": [
+    "access_control_sop.txt",
+    "sla_p1_2026.txt"
+  ],
+  "confidence": 0.83,
+  "history": [
+    "[supervisor] received task: Contractor cần Level 2 access tạm thời để xử lý sự cố P1 đang active. Quy trình là gì?",
+    "[supervisor] route=policy_tool_worker reason=policy/access keywords=['access', 'level 2'] -> policy_tool_worker | mcp_enabled=True | risk_high=False",
+    "[graph] entering retrieval_worker",
+    "[retrieval_worker] retrieved 3 chunks from ['access_control_sop.txt', 'sla_p1_2026.txt']",
+    "[graph] entering policy_tool_worker",
+    "[policy_tool_worker] called MCP check_access_permission",
+    "[policy_tool_worker] domain=access policy_applies=True exceptions=0",
+    "[graph] entering synthesis_worker",
+    "[synthesis_worker] answer generated, confidence=0.83, sources=['access_control_sop.txt', 'sla_p1_2026.txt'], hitl=False",
+    "[graph] completed in 5ms"
+  ],
+  "workers_called": [
+    "retrieval_worker",
+    "policy_tool_worker",
+    "synthesis_worker"
+  ],
+  "supervisor_route": "policy_tool_worker",
+  "latency_ms": 5,
+  "run_id": "run_20260414_171612_848319",
+  "timestamp": "2026-04-14T17:16:12.853968"
+}

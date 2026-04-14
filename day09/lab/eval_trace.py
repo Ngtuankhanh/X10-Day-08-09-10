@@ -17,6 +17,7 @@ Outputs:
 import json
 import os
 import sys
+import csv
 import argparse
 from datetime import datetime
 from typing import Optional
@@ -24,6 +25,91 @@ from typing import Optional
 # Import graph
 sys.path.insert(0, os.path.dirname(__file__))
 from graph import run_graph, save_trace
+
+LAB_DIR = os.path.dirname(__file__)
+DAY08_RESULTS_CSV = os.path.abspath(os.path.join(LAB_DIR, "..", "..", "day08", "lab", "results", "ab_comparison.csv"))
+DAY08_GRADING_JSON = os.path.abspath(os.path.join(LAB_DIR, "..", "..", "day08", "lab", "logs", "grading_run.json"))
+ABSTAIN_PATTERNS = [
+    "không đủ thông tin",
+    "không tìm thấy thông tin",
+    "do not have enough information",
+    "i do not have enough information",
+    "i don't have enough information",
+]
+
+
+def _resolve_path(path: str) -> str:
+    if os.path.isabs(path):
+        return path
+    return os.path.join(LAB_DIR, path)
+
+
+def _is_abstention(answer: str) -> bool:
+    normalized = " ".join((answer or "").strip().lower().split())
+    return any(pattern in normalized for pattern in ABSTAIN_PATTERNS)
+
+
+def _format_rate(count: int, total: int) -> str:
+    if total <= 0:
+        return "0/0 (0%)"
+    return f"{count}/{total} ({round(100 * count / total)}%)"
+
+
+def _load_day08_scorecard(csv_path: str) -> dict:
+    if not os.path.exists(csv_path):
+        return {}
+
+    rows = []
+    with open(csv_path, encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row.get("config_label") == "baseline_dense":
+                rows.append(row)
+
+    if not rows:
+        return {}
+
+    metrics: dict[str, float] = {}
+    for metric_name in ["faithfulness", "relevance", "context_recall", "completeness"]:
+        values = []
+        for row in rows:
+            value = row.get(metric_name)
+            if value in ("", None, "None"):
+                continue
+            try:
+                values.append(float(value))
+            except ValueError:
+                continue
+        if values:
+            metrics[f"avg_{metric_name}"] = round(sum(values) / len(values), 3)
+
+    abstain_count = sum(1 for row in rows if _is_abstention(row.get("answer", "")))
+    return {
+        "question_count": len(rows),
+        "metrics": metrics,
+        "abstain_rate": _format_rate(abstain_count, len(rows)),
+        "available_metrics": sorted(metrics.keys()),
+    }
+
+
+def _load_day08_grading(grading_path: str) -> dict:
+    if not os.path.exists(grading_path):
+        return {}
+
+    with open(grading_path, encoding="utf-8") as file:
+        records = json.load(file)
+
+    if not isinstance(records, list) or not records:
+        return {}
+
+    abstain_count = sum(1 for record in records if _is_abstention(record.get("answer", "")))
+    chunks = [record.get("chunks_retrieved", 0) for record in records if isinstance(record.get("chunks_retrieved"), (int, float))]
+    return {
+        "question_count": len(records),
+        "retrieval_modes": sorted({record.get("retrieval_mode", "unknown") for record in records}),
+        "avg_chunks_retrieved": round(sum(chunks) / len(chunks), 2) if chunks else 0,
+        "abstain_rate": _format_rate(abstain_count, len(records)),
+    }
 
 
 # ─────────────────────────────────────────────
@@ -37,10 +123,11 @@ def run_test_questions(questions_file: str = "data/test_questions.json") -> list
     Returns:
         list of (question, result) tuples
     """
-    with open(questions_file, encoding="utf-8") as f:
+    questions_path = _resolve_path(questions_file)
+    with open(questions_path, encoding="utf-8") as f:
         questions = json.load(f)
 
-    print(f"\n📋 Running {len(questions)} test questions from {questions_file}")
+    print(f"\n📋 Running {len(questions)} test questions from {questions_path}")
     print("=" * 60)
 
     results = []
@@ -55,7 +142,7 @@ def run_test_questions(questions_file: str = "data/test_questions.json") -> list
             result["question_id"] = q_id
 
             # Save individual trace
-            trace_file = save_trace(result, f"artifacts/traces")
+            trace_file = save_trace(result, _resolve_path("artifacts/traces"))
             print(f"  ✓ route={result.get('supervisor_route', '?')}, "
                   f"conf={result.get('confidence', 0):.2f}, "
                   f"{result.get('latency_ms', 0)}ms")
@@ -95,15 +182,16 @@ def run_grading_questions(questions_file: str = "data/grading_questions.json") -
     Returns:
         path tới grading_run.jsonl
     """
-    if not os.path.exists(questions_file):
-        print(f"❌ {questions_file} chưa được public (sau 17:00 mới có).")
+    questions_path = _resolve_path(questions_file)
+    if not os.path.exists(questions_path):
+        print(f"❌ {questions_path} chưa được public (sau 17:00 mới có).")
         return ""
 
-    with open(questions_file, encoding="utf-8") as f:
+    with open(questions_path, encoding="utf-8") as f:
         questions = json.load(f)
 
-    os.makedirs("artifacts", exist_ok=True)
-    output_file = "artifacts/grading_run.jsonl"
+    os.makedirs(_resolve_path("artifacts"), exist_ok=True)
+    output_file = _resolve_path("artifacts/grading_run.jsonl")
 
     print(f"\n🎯 Running GRADING questions — {len(questions)} câu")
     print(f"   Output → {output_file}")
@@ -121,7 +209,7 @@ def run_grading_questions(questions_file: str = "data/grading_questions.json") -
                     "id": q_id,
                     "question": question_text,
                     "answer": result.get("final_answer", "PIPELINE_ERROR: no answer"),
-                    "sources": result.get("retrieved_sources", []),
+                    "sources": result.get("sources") or result.get("retrieved_sources", []),
                     "supervisor_route": result.get("supervisor_route", ""),
                     "route_reason": result.get("route_reason", ""),
                     "workers_called": result.get("workers_called", []),
@@ -174,18 +262,19 @@ def analyze_traces(traces_dir: str = "artifacts/traces") -> dict:
     Returns:
         dict of metrics
     """
-    if not os.path.exists(traces_dir):
-        print(f"⚠️  {traces_dir} không tồn tại. Chạy run_test_questions() trước.")
+    traces_path = _resolve_path(traces_dir)
+    if not os.path.exists(traces_path):
+        print(f"⚠️  {traces_path} không tồn tại. Chạy run_test_questions() trước.")
         return {}
 
-    trace_files = [f for f in os.listdir(traces_dir) if f.endswith(".json")]
+    trace_files = [f for f in os.listdir(traces_path) if f.endswith(".json")]
     if not trace_files:
-        print(f"⚠️  Không có trace files trong {traces_dir}.")
+        print(f"⚠️  Không có trace files trong {traces_path}.")
         return {}
 
     traces = []
     for fname in trace_files:
-        with open(os.path.join(traces_dir, fname)) as f:
+        with open(os.path.join(traces_path, fname), encoding="utf-8") as f:
             traces.append(json.load(f))
 
     # Compute metrics
@@ -194,6 +283,7 @@ def analyze_traces(traces_dir: str = "artifacts/traces") -> dict:
     latencies = []
     mcp_calls = 0
     hitl_triggers = 0
+    abstentions = 0
     source_counts = {}
 
     for t in traces:
@@ -214,7 +304,11 @@ def analyze_traces(traces_dir: str = "artifacts/traces") -> dict:
         if t.get("hitl_triggered"):
             hitl_triggers += 1
 
-        for src in t.get("retrieved_sources", []):
+        if _is_abstention(t.get("final_answer", "")):
+            abstentions += 1
+
+        trace_sources = t.get("sources") or t.get("retrieved_sources", [])
+        for src in trace_sources:
             source_counts[src] = source_counts.get(src, 0) + 1
 
     total = len(traces)
@@ -225,6 +319,7 @@ def analyze_traces(traces_dir: str = "artifacts/traces") -> dict:
         "avg_latency_ms": round(sum(latencies) / len(latencies)) if latencies else 0,
         "mcp_usage_rate": f"{mcp_calls}/{total} ({100*mcp_calls//total}%)" if total else "0%",
         "hitl_rate": f"{hitl_triggers}/{total} ({100*hitl_triggers//total}%)" if total else "0%",
+        "abstain_rate": _format_rate(abstentions, total),
         "top_sources": sorted(source_counts.items(), key=lambda x: -x[1])[:5],
     }
 
@@ -241,39 +336,47 @@ def compare_single_vs_multi(
 ) -> dict:
     """
     So sánh Day 08 (single agent RAG) vs Day 09 (multi-agent).
-
-    TODO Sprint 4: Điền kết quả thực tế từ Day 08 vào day08_baseline.
-
     Returns:
         dict của comparison metrics
     """
     multi_metrics = analyze_traces(multi_traces_dir)
 
-    # TODO: Load Day 08 results nếu có
-    # Nếu không có, dùng baseline giả lập để format
-    day08_baseline = {
-        "total_questions": 15,
-        "avg_confidence": 0.0,          # TODO: Điền từ Day 08 eval.py
-        "avg_latency_ms": 0,            # TODO: Điền từ Day 08
-        "abstain_rate": "?",            # TODO: Điền từ Day 08
-        "multi_hop_accuracy": "?",      # TODO: Điền từ Day 08
+    scorecard_path = day08_results_file or DAY08_RESULTS_CSV
+    day08_scorecard = _load_day08_scorecard(scorecard_path)
+    day08_grading = _load_day08_grading(DAY08_GRADING_JSON)
+
+    analysis: dict[str, str] = {
+        "routing_visibility": "Day 09 có route_reason cho từng câu và log workers_called; Day 08 không có lớp trace routing tương đương.",
     }
 
-    if day08_results_file and os.path.exists(day08_results_file):
-        with open(day08_results_file) as f:
-            day08_baseline = json.load(f)
+    if day08_scorecard.get("abstain_rate") and multi_metrics.get("abstain_rate"):
+        analysis["abstain_rate"] = (
+            f"Day 08 baseline abstain_rate={day08_scorecard['abstain_rate']}; "
+            f"Day 09 multi-agent abstain_rate={multi_metrics['abstain_rate']}."
+        )
+
+    available_day08_metrics = day08_scorecard.get("metrics", {})
+    if available_day08_metrics:
+        analysis["quality_metrics"] = (
+            "Day 08 scorecard available: "
+            + ", ".join(f"{name}={value}" for name, value in available_day08_metrics.items())
+            + ". Day 09 current eval_trace focuses on orchestration metrics, not LLM-judge scorecards."
+        )
+
+    if multi_metrics.get("avg_latency_ms"):
+        analysis["latency_note"] = (
+            f"Day 09 trace shows avg_latency_ms={multi_metrics['avg_latency_ms']}. "
+            "Day 08 checked-in artifacts do not include comparable latency, so no delta is reported."
+        )
 
     comparison = {
         "generated_at": datetime.now().isoformat(),
-        "day08_single_agent": day08_baseline,
-        "day09_multi_agent": multi_metrics,
-        "analysis": {
-            "routing_visibility": "Day 09 có route_reason cho từng câu → dễ debug hơn Day 08",
-            "latency_delta": "TODO: Điền delta latency thực tế",
-            "accuracy_delta": "TODO: Điền delta accuracy thực tế từ grading",
-            "debuggability": "Multi-agent: có thể test từng worker độc lập. Single-agent: không thể.",
-            "mcp_benefit": "Day 09 có thể extend capability qua MCP không cần sửa core. Day 08 phải hard-code.",
+        "day08_single_agent": {
+            "scorecard_baseline": day08_scorecard,
+            "grading_run": day08_grading,
         },
+        "day09_multi_agent": multi_metrics,
+        "analysis": analysis,
     }
 
     return comparison
@@ -285,8 +388,8 @@ def compare_single_vs_multi(
 
 def save_eval_report(comparison: dict) -> str:
     """Lưu báo cáo eval tổng kết ra file JSON."""
-    os.makedirs("artifacts", exist_ok=True)
-    output_file = "artifacts/eval_report.json"
+    os.makedirs(_resolve_path("artifacts"), exist_ok=True)
+    output_file = _resolve_path("artifacts/eval_report.json")
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(comparison, f, ensure_ascii=False, indent=2)
     return output_file

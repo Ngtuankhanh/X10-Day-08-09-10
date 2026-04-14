@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-04-14T17:16:29.244653",
+  "day08_single_agent": {
+    "scorecard_baseline": {
+      "question_count": 10,
+      "metrics": {
+        "avg_faithfulness": 5.0,
+        "avg_relevance": 4.8,
+        "avg_context_recall": 4.778,
+        "avg_completeness": 4.8
+      },
+      "abstain_rate": "1/10 (10%)",
+      "available_metrics": [
+        "avg_completeness",
+        "avg_context_recall",
+        "avg_faithfulness",
+        "avg_relevance"
+      ]
+    },
+    "grading_run": {
+      "question_count": 10,
+      "retrieval_modes": [
+        "dense"
+      ],
+      "avg_chunks_retrieved": 3.0,
+      "abstain_rate": "1/10 (10%)"
+    }
+  },
+  "day09_multi_agent": {
+    "total_traces": 21,
+    "routing_distribution": {
+      "retrieval_worker": "9/21 (42%)",
+      "human_review": "1/21 (4%)",
+      "policy_tool_worker": "11/21 (52%)"
+    },
+    "avg_confidence": 0.727,
+    "avg_latency_ms": 1293,
+    "mcp_usage_rate": "5/21 (23%)",
+    "hitl_rate": "2/21 (9%)",
+    "abstain_rate": "1/21 (5%)",
+    "top_sources": [
+      [
+        "sla_p1_2026.txt",
+        9
+      ],
+      [
+        "policy_refund_v4.txt",
+        7
+      ],
+      [
+        "access_control_sop.txt",
+        5
+      ],
+      [
+        "hr_leave_policy.txt",
+        2
+      ],
+      [
+        "it_helpdesk_faq.txt",
+        1
+      ]
+    ]
+  },
+  "analysis": {
+    "routing_visibility": "Day 09 có route_reason cho từng câu và log workers_called; Day 08 không có lớp trace routing tương đương.",
+    "abstain_rate": "Day 08 baseline abstain_rate=1/10 (10%); Day 09 multi-agent abstain_rate=1/21 (5%).",
+    "quality_metrics": "Day 08 scorecard available: avg_faithfulness=5.0, avg_relevance=4.8, avg_context_recall=4.778, avg_completeness=4.8. Day 09 current eval_trace focuses on orchestration metrics, not LLM-judge scorecards.",
+    "latency_note": "Day 09 trace shows avg_latency_ms=1293. Day 08 checked-in artifacts do not include comparable latency, so no delta is reported."
+  }
+}

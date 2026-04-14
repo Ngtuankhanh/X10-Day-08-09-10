@@ -88,7 +88,7 @@ TOOL_SCHEMAS = {
         "inputSchema": {
             "type": "object",
             "properties": {
-                "access_level": {"type": "integer", "description": "Level cần cấp (1, 2, hoặc 3)"},
+                "access_level": {"type": "integer", "description": "Level cần cấp (1, 2, 3, hoặc 4)"},
                 "requester_role": {"type": "string", "description": "Vai trò của người yêu cầu"},
                 "is_emergency": {"type": "boolean", "description": "Có phải khẩn cấp không", "default": False},
             },
@@ -135,9 +135,7 @@ TOOL_SCHEMAS = {
 def tool_search_kb(query: str, top_k: int = 3) -> dict:
     """
     Tìm kiếm Knowledge Base bằng semantic search.
-
-    TODO Sprint 3: Kết nối với ChromaDB thực.
-    Hiện tại: Delegate sang retrieval worker.
+    Lab này tái dùng retrieval worker để tránh duplicate retrieval logic.
     """
     try:
         # Tái dùng retrieval logic từ workers/retrieval.py
@@ -145,7 +143,7 @@ def tool_search_kb(query: str, top_k: int = 3) -> dict:
         sys.path.insert(0, os.path.dirname(__file__))
         from workers.retrieval import retrieve_dense
         chunks = retrieve_dense(query, top_k=top_k)
-        sources = list({c["source"] for c in chunks})
+        sources = list(dict.fromkeys(c["source"] for c in chunks))
         return {
             "chunks": chunks,
             "sources": sources,
@@ -207,23 +205,32 @@ def tool_get_ticket_info(ticket_id: str) -> dict:
     }
 
 
-# Mock access control rules
+# Access control rules aligned with access_control_sop.txt
 ACCESS_RULES = {
     1: {
-        "required_approvers": ["Line Manager"],
-        "emergency_can_bypass": False,
-        "note": "Standard user access",
+        "level_name": "Level 1 — Read Only",
+        "standard_required_approvers": ["Line Manager"],
+        "standard_processing_time": "1 ngày làm việc",
+        "applies_to": ["nhân viên mới trong 30 ngày đầu"],
     },
     2: {
-        "required_approvers": ["Line Manager", "IT Admin"],
-        "emergency_can_bypass": True,
-        "emergency_bypass_note": "Level 2 có thể cấp tạm thời với approval đồng thời của Line Manager và IT Admin on-call.",
-        "note": "Elevated access",
+        "level_name": "Level 2 — Standard Access",
+        "standard_required_approvers": ["Line Manager", "IT Admin"],
+        "standard_processing_time": "2 ngày làm việc",
+        "applies_to": ["nhân viên chính thức đã qua thử việc"],
     },
     3: {
-        "required_approvers": ["Line Manager", "IT Admin", "IT Security"],
-        "emergency_can_bypass": False,
-        "note": "Admin access — không có emergency bypass",
+        "level_name": "Level 3 — Elevated Access",
+        "standard_required_approvers": ["Line Manager", "IT Admin", "IT Security"],
+        "standard_processing_time": "3 ngày làm việc",
+        "applies_to": ["Team Lead", "Senior Engineer", "Manager"],
+    },
+    4: {
+        "level_name": "Level 4 — Admin Access",
+        "standard_required_approvers": ["IT Manager", "CISO"],
+        "standard_processing_time": "5 ngày làm việc",
+        "applies_to": ["DevOps", "SRE", "IT Admin"],
+        "additional_requirements": ["Training bắt buộc về security policy"],
     },
 }
 
@@ -234,23 +241,51 @@ def tool_check_access_permission(access_level: int, requester_role: str, is_emer
     """
     rule = ACCESS_RULES.get(access_level)
     if not rule:
-        return {"error": f"Access level {access_level} không hợp lệ. Levels: 1, 2, 3."}
+        return {"error": f"Access level {access_level} không hợp lệ. Levels: 1, 2, 3, 4."}
 
+    notes: list[str] = []
     can_grant = True
-    notes = []
+    required_approvers = list(rule["standard_required_approvers"])
+    emergency_override = False
+    temporary_access_duration_hours = None
 
-    if is_emergency and rule.get("emergency_can_bypass"):
-        notes.append(rule.get("emergency_bypass_note", ""))
-        can_grant = True
-    elif is_emergency and not rule.get("emergency_can_bypass"):
-        notes.append(f"Level {access_level} KHÔNG có emergency bypass. Phải follow quy trình chuẩn.")
+    if is_emergency and access_level == 2:
+        emergency_override = True
+        required_approvers = ["Line Manager", "IT Admin on-call"]
+        temporary_access_duration_hours = 24
+        notes.extend(
+            [
+                "Level 2 có emergency bypass trong lab flow để xử lý incident khẩn cấp.",
+                "Approval đồng thời cần từ Line Manager và IT Admin on-call.",
+                "Không cần IT Security cho Level 2 emergency.",
+                "Quyền tạm thời tối đa 24 giờ; sau đó phải có ticket chính thức hoặc bị thu hồi tự động.",
+            ]
+        )
+    elif is_emergency:
+        notes.extend(
+            [
+                "Ngữ cảnh khẩn cấp không tự động thay thế approval chain chuẩn cho level này.",
+                "Nếu cần quyền tạm thời ngoài quy trình thường, phải follow escalation path riêng và ghi log Security Audit.",
+            ]
+        )
+
+    if rule.get("applies_to"):
+        applies_to = ", ".join(rule["applies_to"])
+        notes.append(f"SOP mô tả level này thường áp dụng cho: {applies_to}.")
+    if rule.get("additional_requirements"):
+        notes.extend(rule["additional_requirements"])
 
     return {
         "access_level": access_level,
+        "access_level_name": rule["level_name"],
+        "requester_role": requester_role,
         "can_grant": can_grant,
-        "required_approvers": rule["required_approvers"],
-        "approver_count": len(rule["required_approvers"]),
-        "emergency_override": is_emergency and rule.get("emergency_can_bypass", False),
+        "required_approvers": required_approvers,
+        "approver_count": len(required_approvers),
+        "standard_required_approvers": list(rule["standard_required_approvers"]),
+        "standard_processing_time": rule["standard_processing_time"],
+        "emergency_override": emergency_override,
+        "temporary_access_duration_hours": temporary_access_duration_hours,
         "notes": notes,
         "source": "access_control_sop.txt",
     }
@@ -375,4 +410,4 @@ if __name__ == "__main__":
     print(f"  Error: {err.get('error')}")
 
     print("\n✅ MCP server test done.")
-    print("\nTODO Sprint 3: Implement HTTP server nếu muốn bonus +2.")
+    print("\nOptional bonus: có thể thay lớp mock này bằng HTTP/MCP server thật nếu muốn.")
