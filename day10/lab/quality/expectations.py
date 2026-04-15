@@ -10,6 +10,12 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
+from contract_config import load_contract
+
+_CONTRACT = load_contract()
+REFUND_CLAIMS = _CONTRACT.get("canonical_claims", {}).get("policy_refund_v4", {})
+HR_CLAIMS = _CONTRACT.get("canonical_claims", {}).get("hr_leave_policy", {})
+
 
 @dataclass
 class ExpectationResult:
@@ -109,6 +115,36 @@ def run_expectations(cleaned_rows: List[Dict[str, Any]]) -> Tuple[List[Expectati
             ok6,
             "halt",
             f"violations={len(bad_hr_annual)}",
+        )
+    )
+
+    refund_required = [str(x).lower() for x in REFUND_CLAIMS.get("required_any", [])]
+    refund_rows = [r for r in cleaned_rows if r.get("doc_id") == "policy_refund_v4"]
+    ok7 = any(
+        any(token in (r.get("chunk_text") or "").lower() for token in refund_required)
+        for r in refund_rows
+    )
+    results.append(
+        ExpectationResult(
+            "refund_current_claim_present",
+            ok7,
+            "halt",
+            f"policy_refund_rows={len(refund_rows)} required_any={refund_required}",
+        )
+    )
+
+    hr_required = [str(x).lower() for x in HR_CLAIMS.get("required_any", [])]
+    hr_rows = [r for r in cleaned_rows if r.get("doc_id") == "hr_leave_policy"]
+    ok8 = any(
+        any(token in (r.get("chunk_text") or "").lower() for token in hr_required)
+        for r in hr_rows
+    )
+    results.append(
+        ExpectationResult(
+            "hr_current_claim_present",
+            ok8,
+            "halt",
+            f"hr_rows={len(hr_rows)} required_any={hr_required}",
         )
     )
 

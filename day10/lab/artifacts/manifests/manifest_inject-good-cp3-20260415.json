@@ -1,0 +1,14 @@
+{
+  "run_id": "inject-good-cp3-20260415",
+  "run_timestamp": "2026-04-15T05:55:09.635716+00:00",
+  "raw_path": "data/raw/policy_export_inject.csv",
+  "raw_records": 11,
+  "cleaned_records": 7,
+  "quarantine_records": 4,
+  "latest_exported_at": "2026-04-14T08:16:00Z",
+  "no_refund_fix": false,
+  "skipped_validate": false,
+  "cleaned_csv": "artifacts/cleaned/cleaned_inject-good-cp3-20260415.csv",
+  "chroma_path": "./chroma_db",
+  "chroma_collection": "day10_kb"
+}

@@ -49,6 +49,8 @@ def _log(path: Path, line: str) -> None:
 def cmd_run(args: argparse.Namespace) -> int:
     run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%MZ")
     raw_path = Path(args.raw)
+    if not raw_path.is_absolute():
+        raw_path = (Path.cwd() / raw_path).resolve()
     if not raw_path.is_file():
         print(f"ERROR: raw file not found: {raw_path}", file=sys.stderr)
         return 1
@@ -56,6 +58,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     log_path = LOG_DIR / f"run_{run_id.replace(':', '-')}.log"
     for p in (LOG_DIR, MAN_DIR, QUAR_DIR, CLEAN_DIR):
         p.mkdir(parents=True, exist_ok=True)
+    if log_path.exists():
+        log_path.unlink()
 
     def log(msg: str) -> None:
         print(msg)
@@ -103,10 +107,15 @@ def cmd_run(args: argparse.Namespace) -> int:
     if cleaned:
         latest_exported = max((r.get("exported_at") or "" for r in cleaned), default="")
 
+    try:
+        raw_manifest_path = str(raw_path.relative_to(ROOT))
+    except ValueError:
+        raw_manifest_path = str(raw_path)
+
     manifest = {
         "run_id": run_id,
         "run_timestamp": datetime.now(timezone.utc).isoformat(),
-        "raw_path": str(raw_path.relative_to(ROOT)),
+        "raw_path": raw_manifest_path,
         "raw_records": raw_count,
         "cleaned_records": len(cleaned),
         "quarantine_records": len(quarantine),
@@ -139,6 +148,7 @@ def cmd_embed_internal(cleaned_csv: Path, *, run_id: str, log) -> bool:
     db_path = os.environ.get("CHROMA_DB_PATH", str(ROOT / "chroma_db"))
     collection_name = os.environ.get("CHROMA_COLLECTION", "day10_kb")
     model_name = os.environ.get("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    local_files_only = os.environ.get("EMBEDDING_LOCAL_FILES_ONLY", "").lower() in {"1", "true", "yes"}
 
     from transform.cleaning_rules import load_raw_csv as load_csv  # same loader
 
@@ -148,7 +158,10 @@ def cmd_embed_internal(cleaned_csv: Path, *, run_id: str, log) -> bool:
         return True
 
     client = chromadb.PersistentClient(path=db_path)
-    emb = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=model_name)
+    emb = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name=model_name,
+        local_files_only=local_files_only,
+    )
     col = client.get_or_create_collection(name=collection_name, embedding_function=emb)
 
     ids = [r["chunk_id"] for r in rows]

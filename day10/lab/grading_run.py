@@ -46,9 +46,13 @@ def main() -> int:
     db_path = os.environ.get("CHROMA_DB_PATH", str(ROOT / "chroma_db"))
     collection_name = os.environ.get("CHROMA_COLLECTION", "day10_kb")
     model_name = os.environ.get("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    local_files_only = os.environ.get("EMBEDDING_LOCAL_FILES_ONLY", "").lower() in {"1", "true", "yes"}
 
     client = chromadb.PersistentClient(path=db_path)
-    emb = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=model_name)
+    emb = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name=model_name,
+        local_files_only=local_files_only,
+    )
     col = client.get_collection(name=collection_name, embedding_function=emb)
 
     out = Path(args.out)

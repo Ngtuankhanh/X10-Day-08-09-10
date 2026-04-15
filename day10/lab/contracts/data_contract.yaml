@@ -1,9 +1,9 @@
 # Data contract — Lab Day 10 (tiếp nối artifact CS + IT Helpdesk)
 # Sinh viên bổ sung owner, SLA freshness, và nguồn canonical.
 
-version: "1.0"
+version: "1.1"
 dataset: "kb_chunk_export"
-owner_team: "__TODO__"
+owner_team: "X10"
 
 schema_cleaned:
   chunk_id:
@@ -36,7 +36,7 @@ quality_rules:
 freshness:
   measured_at: "publish"  # ingest | cleaned | publish
   sla_hours: 24
-  alert_channel: "__TODO__"
+  alert_channel: "ops-data-x10"
 
 canonical_sources:
   - path: "data/docs/policy_refund_v4.txt"
@@ -58,3 +58,28 @@ allowed_doc_ids:
 # Merit/Distinction: có thể đưa cutoff versioning vào env và tham chiếu ở đây (tránh hard-code trong code).
 policy_versioning:
   hr_leave_min_effective_date: "2026-01-01"
+
+canonical_claims:
+  policy_refund_v4:
+    current_window_text: "7 ngày làm việc"
+    forbidden_any:
+      - "14 ngày làm việc"
+      - "policy-v3"
+      - "bản sync cũ"
+    required_any:
+      - "7 ngày"
+      - "7 ngày làm việc"
+  hr_leave_policy:
+    current_annual_leave_text: "12 ngày phép năm"
+    forbidden_any:
+      - "10 ngày phép năm"
+    required_any:
+      - "12 ngày"
+      - "12 ngày phép năm"
+
+metadata_rules:
+  exported_at:
+    required: true
+    must_be_iso_datetime: true
+    must_not_be_in_future: true
+    must_be_on_or_after_effective_date: true

@@ -1,0 +1,5 @@
+chunk_id,doc_id,chunk_text,effective_date,exported_at,reason,effective_date_normalized,exported_at_normalized
+5,hr_leave_policy,"Theo chính sách nghỉ phép hiện hành (2026), nhân viên dưới 3 năm kinh nghiệm được 10 ngày phép năm.",2026-02-01,2026-04-14T08:13:00,hr_policy_claim_conflict,2026-02-01,2026-04-14T08:13:00Z
+7,it_helpdesk_faq,﻿Tài khoản bị khóa sau 5 lần đăng nhập sai liên tiếp.,2026-02-01,2026-04-14T08:15:00,duplicate_chunk_text,,
+8,sla_p1_2026,Ticket P1 có SLA phản hồi ban đầu 15 phút và resolution trong 4 giờ.,2026-02-01,2026-01-10T07:00:00,exported_at_before_effective_date,2026-02-01,2026-01-10T07:00:00Z
+9,sla_p1_2026,Ticket P1 có SLA phản hồi ban đầu 15 phút và resolution trong 4 giờ.,2026-02-01,2030-01-01T00:00:00,exported_at_in_future,,2030-01-01T00:00:00Z

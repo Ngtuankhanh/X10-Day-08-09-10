@@ -10,25 +10,39 @@ from __future__ import annotations
 import csv
 import hashlib
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-# Khớp export hợp lệ trong lab (mở rộng khi nhóm thêm doc mới — phải đồng bộ contract).
-ALLOWED_DOC_IDS = frozenset(
-    {
-        "policy_refund_v4",
-        "sla_p1_2026",
-        "it_helpdesk_faq",
-        "hr_leave_policy",
-    }
+from contract_config import load_contract
+
+_CONTRACT = load_contract()
+ALLOWED_DOC_IDS = frozenset(_CONTRACT.get("allowed_doc_ids", []))
+HR_MIN_EFFECTIVE_DATE = str(
+    _CONTRACT.get("policy_versioning", {}).get("hr_leave_min_effective_date", "2026-01-01")
 )
+REFUND_CLAIMS = _CONTRACT.get("canonical_claims", {}).get("policy_refund_v4", {})
+HR_CLAIMS = _CONTRACT.get("canonical_claims", {}).get("hr_leave_policy", {})
+EXPORTED_AT_RULES = _CONTRACT.get("metadata_rules", {}).get("exported_at", {})
 
 _ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _DMY_SLASH = re.compile(r"^(\d{2})/(\d{2})/(\d{4})$")
+_INVISIBLE_CHARS = re.compile(r"[\u200b\u200c\u200d\u2060\ufeff]")
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
 
 def _norm_text(s: str) -> str:
-    return " ".join((s or "").strip().split()).lower()
+    return " ".join(_sanitize_chunk_text(s).strip().split()).lower()
+
+
+def _sanitize_chunk_text(raw: str) -> str:
+    text = (raw or "").replace("\r\n", "\n").replace("\r", "\n")
+    text = _INVISIBLE_CHARS.sub("", text)
+    text = _CONTROL_CHARS.sub(" ", text)
+    text = text.replace("\u2013", "-").replace("\u2014", "-")
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r" *\n *", "\n", text)
+    return text.strip()
 
 
 def _stable_chunk_id(doc_id: str, chunk_text: str, seq: int) -> str:
@@ -51,6 +65,20 @@ def _normalize_effective_date(raw: str) -> Tuple[str, str]:
         dd, mm, yyyy = m.group(1), m.group(2), m.group(3)
         return f"{yyyy}-{mm}-{dd}", ""
     return "", "invalid_effective_date_format"
+
+
+def _normalize_exported_at(raw: str) -> Tuple[str, datetime | None, str]:
+    s = (raw or "").strip()
+    if not s:
+        return "", None, "missing_exported_at"
+    try:
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return "", None, "invalid_exported_at_format"
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    dt = dt.astimezone(timezone.utc)
+    return dt.isoformat().replace("+00:00", "Z"), dt, ""
 
 
 def load_raw_csv(path: Path) -> List[Dict[str, str]]:
@@ -76,12 +104,17 @@ def clean_rows(
     3) Quarantine: chunk hr_leave_policy có effective_date < 2026-01-01 (bản HR cũ / conflict version).
     4) Quarantine: chunk_text rỗng hoặc effective_date rỗng sau chuẩn hoá.
     5) Loại trùng nội dung chunk_text (giữ bản đầu).
-    6) Fix stale refund: policy_refund_v4 chứa '14 ngày làm việc' → 7 ngày.
+    6) Chuẩn hoá / kiểm tra exported_at; quarantine nếu thiếu, sai format, ở tương lai,
+       hoặc đứng trước effective_date.
+    7) Làm sạch invisible/control chars trước dedupe để bắt duplicate bẩn.
+    8) Contract-driven versioning: HR stale cutoff đọc từ contract; refund stale 14 ngày
+       được sửa theo contract nếu bật fix, còn HR claim sai nội dung thì quarantine.
     """
     quarantine: List[Dict[str, Any]] = []
     seen_text: set[str] = set()
     cleaned: List[Dict[str, Any]] = []
     seq = 0
+    now_utc = datetime.now(timezone.utc)
 
     for raw in rows:
         doc_id = raw.get("doc_id", "")
@@ -101,7 +134,7 @@ def clean_rows(
             quarantine.append({**raw, "reason": eff_err, "effective_date_raw": eff_raw})
             continue
 
-        if doc_id == "hr_leave_policy" and eff_norm < "2026-01-01":
+        if doc_id == "hr_leave_policy" and eff_norm < HR_MIN_EFFECTIVE_DATE:
             quarantine.append(
                 {
                     **raw,
@@ -111,8 +144,34 @@ def clean_rows(
             )
             continue
 
+        text = _sanitize_chunk_text(text)
         if not text:
             quarantine.append({**raw, "reason": "missing_chunk_text"})
+            continue
+
+        exported_norm, exported_dt, exported_err = _normalize_exported_at(exported_at)
+        if EXPORTED_AT_RULES.get("required", True) and exported_err == "missing_exported_at":
+            quarantine.append({**raw, "reason": exported_err})
+            continue
+        if exported_err == "invalid_exported_at_format":
+            quarantine.append({**raw, "reason": exported_err})
+            continue
+        if exported_dt and EXPORTED_AT_RULES.get("must_not_be_in_future", True) and exported_dt > now_utc:
+            quarantine.append({**raw, "reason": "exported_at_in_future", "exported_at_normalized": exported_norm})
+            continue
+        if (
+            exported_dt
+            and EXPORTED_AT_RULES.get("must_be_on_or_after_effective_date", True)
+            and exported_dt.date().isoformat() < eff_norm
+        ):
+            quarantine.append(
+                {
+                    **raw,
+                    "reason": "exported_at_before_effective_date",
+                    "effective_date_normalized": eff_norm,
+                    "exported_at_normalized": exported_norm,
+                }
+            )
             continue
 
         key = _norm_text(text)
@@ -123,12 +182,25 @@ def clean_rows(
 
         fixed_text = text
         if apply_refund_window_fix and doc_id == "policy_refund_v4":
+            refund_target = str(REFUND_CLAIMS.get("current_window_text", "7 ngày làm việc"))
             if "14 ngày làm việc" in fixed_text:
                 fixed_text = fixed_text.replace(
                     "14 ngày làm việc",
-                    "7 ngày làm việc",
+                    refund_target,
                 )
                 fixed_text += " [cleaned: stale_refund_window]"
+
+        hr_forbidden = [str(s).lower() for s in HR_CLAIMS.get("forbidden_any", [])]
+        if doc_id == "hr_leave_policy" and any(token in fixed_text.lower() for token in hr_forbidden):
+            quarantine.append(
+                {
+                    **raw,
+                    "reason": "hr_policy_claim_conflict",
+                    "effective_date_normalized": eff_norm,
+                    "exported_at_normalized": exported_norm,
+                }
+            )
+            continue
 
         seq += 1
         cleaned.append(
@@ -137,7 +209,7 @@ def clean_rows(
                 "doc_id": doc_id,
                 "chunk_text": fixed_text,
                 "effective_date": eff_norm,
-                "exported_at": exported_at or "",
+                "exported_at": exported_norm,
             }
         )
 

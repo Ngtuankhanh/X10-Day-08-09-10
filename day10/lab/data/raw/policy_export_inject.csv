@@ -1,0 +1,12 @@
+chunk_id,doc_id,chunk_text,effective_date,exported_at
+1,policy_refund_v4,"Yêu cầu được gửi trong vòng 7 ngày làm việc kể từ thời điểm xác nhận đơn hàng.",2026-02-01,2026-04-14T08:00:00
+2,policy_refund_v4,"Theo policy_refund_v4 hiện hành, khách hàng có 14 ngày làm việc để yêu cầu hoàn tiền sau khi xác nhận đơn.",2026-02-01,2026-04-14T08:05:00
+3,policy_refund_v4,"Yêu cầu hoàn tiền được chấp nhận trong vòng 14 ngày làm việc kể từ xác nhận đơn (ghi chú: bản sync cũ policy-v3 - lỗi migration).",2026-02-01,2026-04-14T08:10:00
+4,hr_leave_policy,"Nhân viên dưới 3 năm kinh nghiệm được 12 ngày phép năm theo chính sách 2026.",2026-02-01,2026-04-14T08:12:00
+5,hr_leave_policy,"Theo chính sách nghỉ phép hiện hành (2026), nhân viên dưới 3 năm kinh nghiệm được 10 ngày phép năm.",2026-02-01,2026-04-14T08:13:00
+6,it_helpdesk_faq,"Tài khoản bị khóa sau 5 lần đăng nhập sai liên tiếp.",2026-02-01,2026-04-14T08:14:00
+7,it_helpdesk_faq,"﻿Tài khoản bị khóa sau 5 lần đăng nhập sai liên tiếp.  ",2026-02-01,2026-04-14T08:15:00
+11,sla_p1_2026,"Ticket P1 có SLA phản hồi ban đầu 15 phút và resolution trong 4 giờ.",2026-02-01,2026-04-14T08:11:00
+8,sla_p1_2026,"Ticket P1 có SLA phản hồi ban đầu 15 phút và resolution trong 4 giờ.",2026-02-01,2026-01-10T07:00:00
+9,sla_p1_2026,"Ticket P1 có SLA phản hồi ban đầu 15 phút và resolution trong 4 giờ.",2026-02-01,2030-01-01T00:00:00
+10,it_helpdesk_faq,"FAQ bổ sung: đổi mật khẩu qua portal self-service có thể mất tối đa 24 giờ để đồng bộ toàn hệ thống.",01/02/2026,2026-04-14T08:16:00
